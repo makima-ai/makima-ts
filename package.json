@@ -1,16 +1,25 @@
 {
   "name": "makima-ts",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Typescript SDK for Makima.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "start": "node dist/index.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "typescript",
+    "node",
+    "makima"
+  ],
+  "author": "Kumar Harsh <kumar.harsh@raj.how>",
   "license": "ISC",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "dependencies": {
     "axios": "^1.7.7",
     "node-fetch": "^2.7.0"

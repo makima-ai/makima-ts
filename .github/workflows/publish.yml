@@ -1,0 +1,46 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - "v*" # Matches tags like v1.0.0, v2.3.4, etc.
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Set up Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18 # Adjust the version as needed
+          registry-url: https://registry.npmjs.org/
+
+      # Extract the version from the Git tag and update package.json
+      - name: Sync version from tag
+        run: |
+          TAG_VERSION=$(echo "${GITHUB_REF#refs/tags/}" | sed 's/^v//')
+          echo "Updating version in package.json to $TAG_VERSION"
+          jq ".version=\"$TAG_VERSION\"" package.json > package.tmp.json
+          mv package.tmp.json package.json
+
+      # Install dependencies using Bun
+      - name: Install dependencies
+        run: |
+          corepack enable
+          bun install
+
+      # Build the project
+      - name: Build project
+        run: bun run build
+
+      # Publish to npm
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish
