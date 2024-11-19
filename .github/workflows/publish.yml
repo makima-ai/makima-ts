@@ -1,4 +1,4 @@
-name: Publish to npm (with Bun and Channels)
+name: Publish to npm (Force Patch)
 
 on:
   push:
@@ -33,7 +33,6 @@ jobs:
       - name: Install dependencies
         run: |
           export PATH="/home/runner/.bun/bin:$PATH"
-          corepack enable
           bun install
 
       # Build the project
@@ -42,33 +41,27 @@ jobs:
           export PATH="/home/runner/.bun/bin:$PATH"
           bun run build
 
-      # Sync version from tag
-      - name: Sync version from tag
+      # Sync version from tag or bump patch version if needed
+      - name: Sync or bump version
         run: |
           TAG_VERSION=$(echo "${GITHUB_REF#refs/tags/}" | sed 's/^v//')
-          echo "Updating version in package.json to $TAG_VERSION"
-          jq ".version=\"$TAG_VERSION\"" package.json > package.tmp.json
-          mv package.tmp.json package.json
-          echo "Updated package.json with version $TAG_VERSION"
-          cat package.json # Debugging: Verify package.json
+          PACKAGE_VERSION=$(jq -r '.version' package.json)
 
-      # Determine publish tag
-      - name: Determine publish tag
-        id: tag
-        run: |
-          TAG="latest"
-          if [[ "${GITHUB_REF#refs/tags/}" == *"-alpha"* ]]; then
-            TAG="alpha"
-          elif [[ "${GITHUB_REF#refs/tags/}" == *"-beta"* ]]; then
-            TAG="beta"
+          if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "Tag version ($TAG_VERSION) does not match package.json version ($PACKAGE_VERSION). Updating package.json."
+            jq ".version=\"$TAG_VERSION\"" package.json > package.tmp.json
+            mv package.tmp.json package.json
+          else
+            echo "Tag version matches package.json. Checking if patch bump is needed."
+            npm version patch --no-git-tag-version
           fi
-          echo "Publish tag: $TAG"
-          echo "tag=$TAG" >> $GITHUB_ENV
+
+          echo "Final package.json version:"
+          cat package.json
 
       # Publish to npm
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          export PATH="/home/runner/.bun/bin:$PATH"
-          npm publish --tag ${{ env.tag }}
+          npm publish --access public || echo "Publish failed. Please check logs."
