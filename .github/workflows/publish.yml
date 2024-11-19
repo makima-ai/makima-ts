@@ -1,4 +1,4 @@
-name: Publish to npm (Conditional Tags)
+name: Publish to npm (with Bun and Channels)
 
 on:
   push:
@@ -21,27 +21,38 @@ jobs:
           node-version: 18
           registry-url: https://registry.npmjs.org/
 
-      # Extract version from Git tag and update package.json
+      # Install Bun
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          export PATH="/home/runner/.bun/bin:$PATH"
+          echo "Bun version:"
+          bun --version
+
+      # Install dependencies with Bun
+      - name: Install dependencies
+        run: |
+          export PATH="/home/runner/.bun/bin:$PATH"
+          corepack enable
+          bun install
+
+      # Build the project
+      - name: Build project
+        run: |
+          export PATH="/home/runner/.bun/bin:$PATH"
+          bun run build
+
+      # Sync version from tag
       - name: Sync version from tag
         run: |
           TAG_VERSION=$(echo "${GITHUB_REF#refs/tags/}" | sed 's/^v//')
           echo "Updating version in package.json to $TAG_VERSION"
           jq ".version=\"$TAG_VERSION\"" package.json > package.tmp.json
           mv package.tmp.json package.json
-          echo "Package version set to $TAG_VERSION"
-          cat package.json # Debugging: Print updated package.json
+          echo "Updated package.json with version $TAG_VERSION"
+          cat package.json # Debugging: Verify package.json
 
-      # Install dependencies
-      - name: Install dependencies
-        run: |
-          corepack enable
-          bun install
-
-      # Build the project
-      - name: Build project
-        run: bun run build
-
-      # Determine npm publish tag
+      # Determine publish tag
       - name: Determine publish tag
         id: tag
         run: |
@@ -58,4 +69,6 @@ jobs:
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --tag ${{ env.tag }}
+        run: |
+          export PATH="/home/runner/.bun/bin:$PATH"
+          npm publish --tag ${{ env.tag }}
