@@ -1,9 +1,9 @@
-name: Publish to npm
+name: Publish to npm (Conditional Tags)
 
 on:
   push:
     tags:
-      - "v*" # Matches tags like v1.0.0, v2.3.4, etc.
+      - "v*" # Matches tags like v1.0.0, v1.0.0-alpha.1, etc.
 
 jobs:
   publish:
@@ -18,18 +18,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18 # Adjust the version as needed
+          node-version: 18
           registry-url: https://registry.npmjs.org/
 
-      # Extract the version from the Git tag and update package.json
+      # Extract version from Git tag and update package.json
       - name: Sync version from tag
         run: |
           TAG_VERSION=$(echo "${GITHUB_REF#refs/tags/}" | sed 's/^v//')
           echo "Updating version in package.json to $TAG_VERSION"
           jq ".version=\"$TAG_VERSION\"" package.json > package.tmp.json
           mv package.tmp.json package.json
+          echo "Package version set to $TAG_VERSION"
+          cat package.json # Debugging: Print updated package.json
 
-      # Install dependencies using Bun
+      # Install dependencies
       - name: Install dependencies
         run: |
           corepack enable
@@ -39,8 +41,21 @@ jobs:
       - name: Build project
         run: bun run build
 
+      # Determine npm publish tag
+      - name: Determine publish tag
+        id: tag
+        run: |
+          TAG="latest"
+          if [[ "${GITHUB_REF#refs/tags/}" == *"-alpha"* ]]; then
+            TAG="alpha"
+          elif [[ "${GITHUB_REF#refs/tags/}" == *"-beta"* ]]; then
+            TAG="beta"
+          fi
+          echo "Publish tag: $TAG"
+          echo "tag=$TAG" >> $GITHUB_ENV
+
       # Publish to npm
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish
+        run: npm publish --tag ${{ env.tag }}
