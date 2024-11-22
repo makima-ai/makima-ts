@@ -1,5 +1,5 @@
 import { AgentAPI } from "./agent/api";
-import { KnowledgeBaseAPI } from "./knowledge/api";
+import { KnowledgeAPI } from "./knowledge/api";
 import { ThreadAPI } from "./thread/api";
 import { ToolAPI } from "./tool/api";
 
@@ -11,7 +11,7 @@ class Makima {
   agent: AgentAPI;
   thread: ThreadAPI;
   tool: ToolAPI;
-  knowledgeBase: KnowledgeBaseAPI;
+  knowledgeBase: KnowledgeAPI;
 
   /**
    * Creates an instance of the Makima SDK.
@@ -22,7 +22,7 @@ class Makima {
     this.agent = new AgentAPI(baseUrl);
     this.thread = new ThreadAPI(baseUrl);
     this.tool = new ToolAPI(baseUrl);
-    this.knowledgeBase = new KnowledgeBaseAPI(baseUrl);
+    this.knowledgeBase = new KnowledgeAPI(baseUrl);
   }
 }
 

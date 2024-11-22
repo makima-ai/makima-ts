@@ -1,166 +1,216 @@
-import { KBDocument, KnowledgeBase, SearchResult } from "./types";
+// sdk.ts
 
-export class KnowledgeBaseAPI {
+import { KnowledgeBase, KBDocument, SearchResult } from "./types";
+
+export class KnowledgeAPI {
   private baseUrl: string;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
   }
 
-  /** Get all knowledge bases. */
-  async getAllKnowledgeBases(): Promise<KnowledgeBase[]> {
-    const response = await fetch(`${this.baseUrl}/knowledge`, {
-      method: "GET",
-    });
-    if (!response.ok) throw new Error(await response.text());
+  // Get all knowledge bases
+  async getKnowledgeBases(): Promise<KnowledgeBase[]> {
+    const response = await fetch(`${this.baseUrl}/knowledge/`);
+    if (!response.ok) {
+      throw new Error(`Failed to get knowledge bases: ${response.statusText}`);
+    }
     return response.json();
   }
 
-  /** Get details of a specific knowledge base by name. */
-  async getKnowledgeBase(name: string): Promise<KnowledgeBase> {
-    const response = await fetch(`${this.baseUrl}/knowledge/${name}`, {
-      method: "GET",
-    });
-    if (!response.ok) throw new Error(await response.text());
+  // Get knowledge base by name
+  async getKnowledgeBaseByName(name: string): Promise<KnowledgeBase> {
+    const response = await fetch(
+      `${this.baseUrl}/knowledge/${encodeURIComponent(name)}`
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Failed to get knowledge base '${name}': ${response.statusText}`
+      );
+    }
     return response.json();
   }
 
-  /** Create a new knowledge base. */
-  async createKnowledgeBase(data: {
+  // Create a new knowledge base
+  async createKnowledgeBase(kb: {
     name: string;
     description?: string;
     embedding_model: string;
-    database_provider: string;
+    database_provider?: string;
   }): Promise<{ id: string }> {
+    const payload = {
+      ...kb,
+      database_provider: kb.database_provider || "pgvector",
+    };
+
     const response = await fetch(`${this.baseUrl}/knowledge/create`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
-    if (!response.ok) throw new Error(await response.text());
+    if (!response.ok) {
+      throw new Error(
+        `Failed to create knowledge base: ${response.statusText}`
+      );
+    }
     return response.json();
   }
 
-  /** Delete a knowledge base. */
-  async deleteKnowledgeBase(name: string): Promise<{ message: string }> {
-    const response = await fetch(`${this.baseUrl}/knowledge/${name}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) throw new Error(await response.text());
-    return response.json();
-  }
-
-  /** Update details of a knowledge base. */
+  // Update knowledge base
   async updateKnowledgeBase(
     name: string,
-    data: {
-      embedding_model?: string;
+    kb: Partial<{
+      embedding_model: string;
       description?: string;
-    }
+    }>
   ): Promise<KnowledgeBase> {
-    const response = await fetch(`${this.baseUrl}/knowledge/${name}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error(await response.text());
-    return response.json();
-  }
-
-  /** Perform a similarity search on a knowledge base. */
-  async searchKnowledgeBase(
-    name: string,
-    query: { q: string; k: number; model?: string }
-  ): Promise<SearchResult[]> {
-    const params = new URLSearchParams({
-      q: query.q,
-      k: query.k.toString(),
-      ...(query.model && { model: query.model }),
-    });
     const response = await fetch(
-      `${this.baseUrl}/knowledge/${name}/search?${params}`,
-      {
-        method: "GET",
-      }
-    );
-    if (!response.ok) throw new Error(await response.text());
-    return response.json();
-  }
-
-  /** Add a document to a knowledge base. */
-  async addDocument(
-    name: string,
-    data: { content: string; model?: string; metadata?: Record<string, any> }
-  ): Promise<{ id: string }> {
-    const response = await fetch(
-      `${this.baseUrl}/knowledge/${name}/add-document`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      }
-    );
-    if (!response.ok) throw new Error(await response.text());
-    return response.json();
-  }
-
-  /** Update an existing document in a knowledge base. */
-  async updateDocument(
-    name: string,
-    data: {
-      id: string; // Document ID is required.
-      content?: string; // Content is optional for partial updates.
-      metadata?: Record<string, any>; // Metadata is optional.
-    }
-  ): Promise<{ id: string }> {
-    const response = await fetch(
-      `${this.baseUrl}/knowledge/${name}/update-document`,
+      `${this.baseUrl}/knowledge/${encodeURIComponent(name)}`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(kb),
       }
     );
-    if (!response.ok) throw new Error(await response.text());
+    if (!response.ok) {
+      throw new Error(
+        `Failed to update knowledge base '${name}': ${response.statusText}`
+      );
+    }
     return response.json();
   }
 
-  /** Remove a document from a knowledge base. */
-  async removeDocument(
+  // Delete knowledge base
+  async deleteKnowledgeBase(name: string): Promise<{ message: string }> {
+    const response = await fetch(
+      `${this.baseUrl}/knowledge/${encodeURIComponent(name)}`,
+      {
+        method: "DELETE",
+      }
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Failed to delete knowledge base '${name}': ${response.statusText}`
+      );
+    }
+    return response.json();
+  }
+
+  // Add document to knowledge base
+  async addDocumentToKnowledgeBase(
+    name: string,
+    document: {
+      content: string;
+      metadata?: { [key: string]: any };
+      model?: string;
+    }
+  ): Promise<{ id: string }> {
+    const response = await fetch(
+      `${this.baseUrl}/knowledge/${encodeURIComponent(name)}/add-document`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(document),
+      }
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Failed to add document to knowledge base '${name}': ${response.statusText}`
+      );
+    }
+    return response.json();
+  }
+
+  // Update document in knowledge base
+  async updateDocumentInKnowledgeBase(
+    name: string,
+    document: {
+      id: string;
+      content?: string;
+      metadata?: { [key: string]: any };
+    }
+  ): Promise<{ id: string }> {
+    const response = await fetch(
+      `${this.baseUrl}/knowledge/${encodeURIComponent(name)}/update-document`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(document),
+      }
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Failed to update document in knowledge base '${name}': ${response.statusText}`
+      );
+    }
+    return response.json();
+  }
+
+  // Remove document from knowledge base
+  async removeDocumentFromKnowledgeBase(
     name: string,
     documentId: string
   ): Promise<{ message: string }> {
     const response = await fetch(
-      `${this.baseUrl}/knowledge/${name}/remove-document/${documentId}`,
-      { method: "DELETE" }
+      `${this.baseUrl}/knowledge/${encodeURIComponent(
+        name
+      )}/remove-document/${encodeURIComponent(documentId)}`,
+      {
+        method: "DELETE",
+      }
     );
-    if (!response.ok) throw new Error(await response.text());
+    if (!response.ok) {
+      throw new Error(
+        `Failed to remove document from knowledge base '${name}': ${response.statusText}`
+      );
+    }
     return response.json();
   }
 
-  /** Get documents from a knowledge base, optionally filtered by query. */
-  async getDocuments(
-    name: string,
-    query?: Record<string, string>
-  ): Promise<KBDocument[]> {
-    const queryString = query
-      ? `?${new URLSearchParams(query).toString()}`
-      : "";
+  // Get documents from knowledge base
+  async getDocumentsFromKnowledgeBase(name: string): Promise<KBDocument[]> {
     const response = await fetch(
-      `${this.baseUrl}/knowledge/${name}/documents${queryString}`,
-      {
-        method: "GET",
-      }
+      `${this.baseUrl}/knowledge/${encodeURIComponent(name)}/documents`
     );
-    if (!response.ok) throw new Error(await response.text());
+    if (!response.ok) {
+      throw new Error(
+        `Failed to get documents from knowledge base '${name}': ${response.statusText}`
+      );
+    }
+    return response.json();
+  }
+
+  // Search knowledge base
+  async searchKnowledgeBase(
+    name: string,
+    query: string,
+    k: number,
+    model?: string
+  ): Promise<SearchResult[]> {
+    const params = new URLSearchParams();
+    params.append("q", query);
+    params.append("k", k.toString());
+    if (model) {
+      params.append("model", model);
+    }
+    const response = await fetch(
+      `${this.baseUrl}/knowledge/${encodeURIComponent(
+        name
+      )}/search?${params.toString()}`
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Failed to search knowledge base '${name}': ${response.statusText}`
+      );
+    }
     return response.json();
   }
 }
