@@ -1,5 +1,3 @@
-// sdk.ts
-
 import { KnowledgeBase, KBDocument, SearchResult } from "./types";
 
 export class KnowledgeAPI {

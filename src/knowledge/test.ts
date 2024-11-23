@@ -1,10 +1,10 @@
 // test-sdk.ts
 
-import { KnowledgeAPI } from "./api";
+import { Makima } from "../makima";
 import { KnowledgeBase } from "./types";
 
 (async () => {
-  const apiClient = new KnowledgeAPI();
+  const apiClient = new Makima("http://localhost:7777").knowledgeBase;
   const kbName = "testKnowledgeBase";
   const documentContent = "This is a sample document for testing purposes.";
   let documentId: string;
