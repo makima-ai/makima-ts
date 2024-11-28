@@ -21,26 +21,16 @@ jobs:
           node-version: 18
           registry-url: https://registry.npmjs.org/
 
-      # Install Bun
-      - name: Install Bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash
-          export PATH="/home/runner/.bun/bin:$PATH"
-          echo "Bun version:"
-          bun --version
-
-      # Install dependencies with Bun
+      # Install dependencies
       - name: Install dependencies
-        run: |
-          export PATH="/home/runner/.bun/bin:$PATH"
-          bun install
+        run: npm install
 
-      # Build the project
+      # Build the project with TypeScript
       - name: Build project
         run: |
-          export PATH="/home/runner/.bun/bin:$PATH"
-          bun run build
-          # Verify the dist folder
+          echo "Building project..."
+          npm run build
+          echo "Build complete. Verifying dist folder contents:"
           ls -la dist
 
       # Sync version from tag or bump patch version if needed
