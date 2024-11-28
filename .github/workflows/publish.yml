@@ -40,6 +40,8 @@ jobs:
         run: |
           export PATH="/home/runner/.bun/bin:$PATH"
           bun run build
+          # Verify the dist folder
+          ls -la dist
 
       # Sync version from tag or bump patch version if needed
       - name: Sync or bump version
