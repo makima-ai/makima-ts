@@ -61,7 +61,7 @@ class KnowledgeAPI {
    */
   async createKnowledgeBase(kb: {
     name: string;
-    description?: string;
+    description?: string | null;
     embedding_model: string;
     database_provider?: string;
   }): Promise<{ id: string }> {
@@ -143,6 +143,29 @@ class KnowledgeAPI {
   }
 
   /**
+   * Delete a knowledge base by its name.
+   * @param name The name of the knowledge base.
+   * @returns A promise resolving to the result of the deletion.
+   */
+  async resetKnowledgeBase(name: string): Promise<{ message: string }> {
+    try {
+      const response = await axios.delete(
+        `${this.baseUrl}/knowledge/${encodeURIComponent(name)}/reset`
+      );
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Failed to reset knowledge base '${name}': ${
+            error.response?.data.message || error.message
+          }`
+        );
+      }
+      throw new Error("An unexpected error occurred.");
+    }
+  }
+
+  /**
    * Add a document to a knowledge base.
    * @param name The name of the knowledge base.
    * @param document The document details to add.
@@ -160,6 +183,41 @@ class KnowledgeAPI {
       const response = await axios.post(
         `${this.baseUrl}/knowledge/${encodeURIComponent(name)}/add-document`,
         document,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Failed to add document to knowledge base '${name}': ${
+            error.response?.data.message || error.message
+          }`
+        );
+      }
+      throw new Error("An unexpected error occurred.");
+    }
+  }
+
+  /**
+   * Add multiple documents to a knowledge base.
+   * @param name The name of the knowledge base.
+   * @param documents A list of documents to add.
+   * @returns A promise resolving to the ID of the added document.
+   */
+  async addMultipleDocumentsToKnowledgeBase(
+    name: string,
+    documents: {
+      content: string;
+      metadata?: { [key: string]: any };
+      model?: string;
+    }[]
+  ): Promise<{ id: string }> {
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/knowledge/${encodeURIComponent(name)}/add-documents`,
+        documents,
         {
           headers: { "Content-Type": "application/json" },
         }

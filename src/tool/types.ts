@@ -9,4 +9,13 @@ interface ToolParams {
   method: string;
 }
 
-export { ToolParams };
+interface ToolData {
+  id: string;
+  params: unknown;
+  description: string | null;
+  name: string;
+  createdAt: Date | null;
+  endpoint: string;
+  method: string;
+}
+export { ToolParams, ToolData };
