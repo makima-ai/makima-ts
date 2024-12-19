@@ -1,9 +1,11 @@
 export interface KnowledgeBase {
+  id: string;
+  description?: string | null;
   name: string;
-  description?: string;
   embedding_model: string;
+  models?: string[] | null;
   database_provider: string;
-  createdAt?: Date;
+  createdAt: Date;
 }
 
 export interface KBDocument {
@@ -11,13 +13,9 @@ export interface KBDocument {
   content: string;
   model: string;
   metadata?: Record<string, any>;
-  createdAt?: Date;
+  createdAt: Date;
 }
 
-export interface SearchResult {
-  id: string;
-  content: string;
-  model: string;
-  metadata?: Record<string, any>;
+export interface SearchResult extends Omit<KBDocument, "createdAt"> {
   similarity: number;
 }

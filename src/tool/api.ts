@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ToolParams } from "./types";
+import { ToolData, ToolParams } from "./types";
 
 /**
  * Class representing the Tool API.
@@ -15,7 +15,7 @@ class ToolAPI {
    * Get all tools in the system.
    * @returns A promise resolving to the list of tools.
    */
-  async getAll(): Promise<any> {
+  async getAll(): Promise<ToolData[]> {
     try {
       const response = await axios.get(`${this.baseUrl}/tool/`);
       return response.data;
@@ -36,7 +36,7 @@ class ToolAPI {
    * @param name The name of the tool.
    * @returns A promise resolving to the tool details.
    */
-  async get(name: string): Promise<any> {
+  async get(name: string): Promise<ToolData> {
     try {
       const response = await axios.get(
         `${this.baseUrl}/tool/${encodeURIComponent(name)}`
@@ -59,7 +59,7 @@ class ToolAPI {
    * @param params The tool details.
    * @returns A promise resolving to the created tool.
    */
-  async create(params: ToolParams): Promise<any> {
+  async create(params: ToolParams): Promise<ToolData> {
     try {
       const response = await axios.post(`${this.baseUrl}/tool/create`, params, {
         headers: { "Content-Type": "application/json" },
@@ -83,7 +83,7 @@ class ToolAPI {
    * @param params The tool details to update.
    * @returns A promise resolving to the updated tool.
    */
-  async update(name: string, params: Partial<ToolParams>): Promise<any> {
+  async update(name: string, params: Partial<ToolParams>): Promise<ToolData> {
     try {
       const response = await axios.put(
         `${this.baseUrl}/tool/${encodeURIComponent(name)}`,
@@ -110,7 +110,7 @@ class ToolAPI {
    * @param name The name of the tool.
    * @returns A promise resolving to the result of the deletion.
    */
-  async delete(name: string): Promise<any> {
+  async delete(name: string): Promise<{ message: string }> {
     try {
       const response = await axios.delete(
         `${this.baseUrl}/tool/${encodeURIComponent(name)}`
