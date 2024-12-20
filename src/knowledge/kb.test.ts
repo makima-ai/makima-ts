@@ -5,6 +5,7 @@ import { KnowledgeBase } from "./types";
 // Define the knowledge base details that will be reused in each test
 const kbName = "testKnowledgeBase";
 const documentContent = "This is a sample document for testing purposes.";
+const documentContent2 = "This is the second document as part of multiple docs";
 let documentId: string;
 
 // Create a Makima API client instance for the Knowledge Base API
@@ -14,7 +15,7 @@ test(
   "Create a new knowledge base",
   async () => {
     console.log("Creating a new knowledge base...");
-    const newKnowledgeBase: KnowledgeBase = {
+    const newKnowledgeBase: Omit<KnowledgeBase, "id" | "createdAt"> = {
       name: kbName,
       description: "A knowledge base for testing the SDK.",
       embedding_model: "ollama/llama3",
@@ -54,6 +55,29 @@ test(
     documentId = response.id; // Store document ID for future tests
   },
   { timeout: 1 * 60 * 1000 }
+);
+
+test(
+  "Add multiple documents to the knowledge base",
+  async () => {
+    console.log("Adding mulitple documents to the knowledge base...");
+    const newDocuments = [
+      {
+        content: documentContent,
+        metadata: { author: "SDK Tester", category: "Test" },
+      },
+      {
+        content: documentContent2,
+        metadata: { author: "SDK Tester", category: "Test" },
+      },
+    ];
+    const response = await apiClient.addMultipleDocumentsToKnowledgeBase(
+      kbName,
+      newDocuments
+    );
+    console.log("Documents added:", response);
+  },
+  { timeout: 2 * 60 * 1000 }
 );
 
 test("Get documents from the knowledge base", async () => {
@@ -107,6 +131,12 @@ test("Update the knowledge base description", async () => {
     description: "An updated description for the knowledge base.",
   });
   console.log("Knowledge base updated:", response);
+});
+
+test("Reset the knowledge base", async () => {
+  console.log("Reseting the knowledge base...");
+  const response = await apiClient.resetKnowledgeBase(kbName);
+  console.log("Knowledge base reset:", response);
 });
 
 test("Delete the knowledge base", async () => {

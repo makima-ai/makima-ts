@@ -1,5 +1,7 @@
 import axios, { AxiosError } from "axios";
-import { AgentParams } from "./types";
+import { AgentData, AgentDetailData, AgentParams } from "./types";
+import { ToolData } from "../tool/types";
+import { UserMessage } from "../thread/types";
 
 /**
  * Class representing the Agent API.
@@ -15,7 +17,7 @@ class AgentAPI {
    * Get all agents in the system.
    * @returns A promise resolving to the list of agents.
    */
-  async getAll(): Promise<any> {
+  async getAll(): Promise<AgentData[]> {
     try {
       const response = await axios.get(`${this.baseUrl}/agent/`);
       return response.data;
@@ -36,7 +38,7 @@ class AgentAPI {
    * @param name The name of the agent.
    * @returns A promise resolving to the agent details.
    */
-  async get(name: string): Promise<any> {
+  async get(name: string): Promise<AgentData & { tools: ToolData[] }> {
     try {
       const response = await axios.get(
         `${this.baseUrl}/agent/${encodeURIComponent(name)}`
@@ -59,7 +61,7 @@ class AgentAPI {
    * @param params The agent details.
    * @returns A promise resolving to the created agent.
    */
-  async create(params: AgentParams): Promise<any> {
+  async create(params: AgentParams): Promise<AgentData> {
     try {
       const response = await axios.post(
         `${this.baseUrl}/agent/create`,
@@ -87,7 +89,7 @@ class AgentAPI {
    * @param params The agent details to update.
    * @returns A promise resolving to the updated agent.
    */
-  async update(name: string, params: Partial<AgentParams>): Promise<any> {
+  async update(name: string, params: Partial<AgentParams>): Promise<AgentData> {
     try {
       const response = await axios.put(
         `${this.baseUrl}/agent/${encodeURIComponent(name)}`,
@@ -112,7 +114,7 @@ class AgentAPI {
    * @param name The name of the agent.
    * @returns A promise resolving to the result of the deletion.
    */
-  async delete(name: string): Promise<any> {
+  async delete(name: string): Promise<{ message: string }> {
     try {
       const response = await axios.delete(
         `${this.baseUrl}/agent/${encodeURIComponent(name)}`
@@ -131,12 +133,70 @@ class AgentAPI {
   }
 
   /**
+   * Add a helper agent to an agent by the agent name and helper agent name.
+   * @param agentName The name of the agent.
+   * @param helperAgentName The name of the helper agent.
+   * @returns A promise resolving to the result of the operation.
+   */
+  async addHelperAgent(
+    agentName: string,
+    helperAgentName: string
+  ): Promise<AgentDetailData> {
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/agent/${encodeURIComponent(
+          agentName
+        )}/add-helper/${encodeURIComponent(helperAgentName)}`
+      );
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Failed to add helper agent '${helperAgentName}' to agent '${agentName}': ${
+            error.response?.data.message || error.message
+          }`
+        );
+      }
+      throw new Error("An unexpected error occurred.");
+    }
+  }
+
+  /**
+   * Remove a helper agent to an agent by the agent name and helper agent name.
+   * @param agentName The name of the agent.
+   * @param helperAgentName The name of the helper agent.
+   * @returns A promise resolving to the result of the operation.
+   */
+  async removeHelperAgent(
+    agentName: string,
+    helperAgentName: string
+  ): Promise<AgentDetailData> {
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/agent/${encodeURIComponent(
+          agentName
+        )}/remove-helper/${encodeURIComponent(helperAgentName)}`
+      );
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Failed to remove helper agent '${helperAgentName}' from agent '${agentName}': ${
+            error.response?.data.message || error.message
+          }`
+        );
+      }
+      throw new Error("An unexpected error occurred.");
+    }
+  }
+
+  /**
    * Add a tool to an agent by the agent name and tool name.
    * @param agentName The name of the agent.
    * @param toolName The name of the tool.
    * @returns A promise resolving to the result of the operation.
    */
-  async addTool(agentName: string, toolName: string): Promise<any> {
+  async addTool(agentName: string, toolName: string): Promise<AgentDetailData> {
     try {
       const response = await axios.post(
         `${this.baseUrl}/agent/${encodeURIComponent(
@@ -162,7 +222,10 @@ class AgentAPI {
    * @param toolName The name of the tool.
    * @returns A promise resolving to the result of the operation.
    */
-  async removeTool(agentName: string, toolName: string): Promise<any> {
+  async removeTool(
+    agentName: string,
+    toolName: string
+  ): Promise<AgentDetailData> {
     try {
       const response = await axios.post(
         `${this.baseUrl}/agent/${encodeURIComponent(
@@ -188,7 +251,10 @@ class AgentAPI {
    * @param knowledgeBaseName The name of the knowledge base.
    * @returns A promise resolving to the result of the operation.
    */
-  async addKnowledgeBase(agentName: string, knowledgeBaseName: string) {
+  async addKnowledgeBase(
+    agentName: string,
+    knowledgeBaseName: string
+  ): Promise<AgentDetailData> {
     try {
       const response = await axios.post(
         `${this.baseUrl}/${encodeURIComponent(
@@ -214,7 +280,10 @@ class AgentAPI {
    * @param knowledgeBaseName The name of the knowledge base.
    * @returns A promise resolving to the result of the operation.
    */
-  async removeKnowledgeBase(agentName: string, knowledgeBaseName: string) {
+  async removeKnowledgeBase(
+    agentName: string,
+    knowledgeBaseName: string
+  ): Promise<AgentDetailData> {
     try {
       const response = await axios.post(
         `${this.baseUrl}/${encodeURIComponent(
@@ -226,6 +295,34 @@ class AgentAPI {
       if (axios.isAxiosError(error)) {
         throw new Error(
           `Failed to remove knowledge base '${knowledgeBaseName}' from agent '${agentName}': ${
+            error.response?.data.message || error.message
+          }`
+        );
+      }
+      throw new Error("An unexpected error occurred.");
+    }
+  }
+
+  /**
+   * Send a single chat message to the agent based on agent name and a message sent in a specific format
+   * @param agentName The name of the agent.
+   * @param message The body of the message in specified format
+   * @returns A promise resolving to the result of the operation.
+   */
+  async tempChat(
+    agentName: string,
+    message: UserMessage
+  ): Promise<AgentDetailData> {
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/agent/${encodeURIComponent(agentName)}/chat`,
+        message
+      );
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Failed to have a temporary chat with agent '${agentName}': ${
             error.response?.data.message || error.message
           }`
         );

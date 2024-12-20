@@ -1,5 +1,12 @@
 import axios from "axios";
-import { ThreadCreateParams, MessageParams, ThreadChatParams } from "./types";
+import {
+  ThreadCreateParams,
+  MessageParams,
+  ThreadChatParams,
+  ThreadData,
+  Message,
+  OutputMessage,
+} from "./types";
 
 /**
  * Class representing the Thread API.
@@ -15,7 +22,7 @@ class ThreadAPI {
    * Get all threads in the system.
    * @returns A promise resolving to the list of threads.
    */
-  async getAll(): Promise<any> {
+  async getAll(): Promise<ThreadData[]> {
     try {
       const response = await axios.get(`${this.baseUrl}/thread/`);
       return response.data;
@@ -36,7 +43,7 @@ class ThreadAPI {
    * @param id The ID of the thread.
    * @returns A promise resolving to the thread details.
    */
-  async get(id: string): Promise<any> {
+  async get(id: string): Promise<ThreadData> {
     try {
       const response = await axios.get(
         `${this.baseUrl}/thread/${encodeURIComponent(id)}`
@@ -59,7 +66,10 @@ class ThreadAPI {
    * @param id The ID of the thread.
    * @returns A promise resolving to the result of the deletion.
    */
-  async delete(id: string): Promise<any> {
+  async delete(id: string): Promise<{
+    message: string;
+    deletedMessages: number;
+  }> {
     try {
       const response = await axios.delete(
         `${this.baseUrl}/thread/${encodeURIComponent(id)}`
@@ -82,7 +92,7 @@ class ThreadAPI {
    * @param id The ID of the thread.
    * @returns A promise resolving to the list of messages.
    */
-  async getMessages(id: string): Promise<any> {
+  async getMessages(id: string): Promise<Message[]> {
     try {
       const response = await axios.get(
         `${this.baseUrl}/thread/${encodeURIComponent(id)}/messages`
@@ -105,7 +115,7 @@ class ThreadAPI {
    * @param params The thread details.
    * @returns A promise resolving to the created thread.
    */
-  async create(params: ThreadCreateParams): Promise<any> {
+  async create(params: ThreadCreateParams): Promise<{ id: string }> {
     try {
       const response = await axios.post(
         `${this.baseUrl}/thread/create`,
@@ -133,7 +143,7 @@ class ThreadAPI {
    * @param params The message details.
    * @returns A promise resolving to the added message.
    */
-  async addMessage(id: string, params: MessageParams): Promise<any> {
+  async addMessage(id: string, params: MessageParams): Promise<Message> {
     try {
       const response = await axios.post(
         `${this.baseUrl}/thread/${encodeURIComponent(id)}/message`,
@@ -161,7 +171,7 @@ class ThreadAPI {
    * @param params The chat parameters.
    * @returns A promise resolving to the inference result.
    */
-  async chat(id: string, params: ThreadChatParams): Promise<any> {
+  async chat(id: string, params: ThreadChatParams): Promise<OutputMessage> {
     try {
       const response = await axios.post(
         `${this.baseUrl}/thread/${encodeURIComponent(id)}/chat`,
@@ -189,7 +199,7 @@ class ThreadAPI {
    * @param agentName The name of the new agent.
    * @returns A promise resolving to the updated thread.
    */
-  async updateAgent(id: string, agentName: string): Promise<any> {
+  async updateAgent(id: string, agentName: string): Promise<ThreadData> {
     try {
       const response = await axios.put(
         `${this.baseUrl}/thread/${encodeURIComponent(id)}/agent`,
